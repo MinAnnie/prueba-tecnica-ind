@@ -65,8 +65,8 @@ PostgreSQL está configurada automáticamente a través de Docker Compose.
 
 1. **Clona el repositorio**:
     ```bash
-    git clone https://github.com/tu-repositorio
-    cd tu-repositorio
+    git clone https://github.com/MinAnnie/prueba-tecnica-ind.git
+    cd prueba-tecnica-ind
     ```
 
 2. **Construye y ejecuta los contenedores**:
