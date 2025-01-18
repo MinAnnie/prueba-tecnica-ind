@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "prueba-tecnica", "prueba-tecnica\prueba-tecnica.csproj", "{CEC40DF5-E3EC-4EFE-84D5-5EF6323CE70E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CEC40DF5-E3EC-4EFE-84D5-5EF6323CE70E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEC40DF5-E3EC-4EFE-84D5-5EF6323CE70E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEC40DF5-E3EC-4EFE-84D5-5EF6323CE70E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEC40DF5-E3EC-4EFE-84D5-5EF6323CE70E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
