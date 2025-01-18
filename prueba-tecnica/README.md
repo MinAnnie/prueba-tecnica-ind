@@ -53,8 +53,8 @@ Este proyecto usa Docker Compose para levantar los servicios de la API y la base
 
 1. **Clona el repositorio**:
     ```bash
-    git clone https://github.com/tu-repositorio
-    cd tu-repositorio
+    git clone https://github.com/MinAnnie/prueba-tecnica-ind.git
+    cd prueba-tecnica-ind
     ```
 
 2. **Construye y ejecuta los contenedores**:
