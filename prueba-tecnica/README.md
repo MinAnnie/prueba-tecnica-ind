@@ -1,7 +1,7 @@
-
 # Proyecto API de Productos
 
-Este es un proyecto para gestionar productos y sus movimientos de stock, desarrollado con ASP.NET Core y PostgreSQL, ejecutado dentro de contenedores Docker.
+Este es un proyecto para gestionar productos y sus movimientos de stock, desarrollado con ASP.NET Core y PostgreSQL,
+ejecutado dentro de contenedores Docker.
 
 ## Descripción
 
@@ -14,11 +14,22 @@ El proyecto incluye los siguientes servicios:
 
 El proyecto está dividido en las siguientes secciones:
 
-- **Controllers**: Los controladores de la API que gestionan las solicitudes para los productos y los movimientos de stock.
-- **Models**: Los modelos que representan la estructura de datos de los productos y los movimientos de stock.
-    - **Product**: Modelo que representa la entidad de producto.
-    - **StockMovement**: Modelo que representa los movimientos de stock (entradas y salidas).
-- **db**: Carpeta que contiene el archivo `db.sql`, el cual contiene el código necesario para crear las tablas `Products` y `StockMovements` en la base de datos PostgreSQL.
+* **Controllers**: Los controladores de la API que gestionan las solicitudes para los productos y los movimientos de
+  stock.
+* **Models**: Los modelos que representan la estructura de datos de los productos y los movimientos de stock.
+    * **Product**: Modelo que representa la entidad de producto.
+    * **StockMovement**: Modelo que representa los movimientos de stock (entradas y salidas).
+* **Services**: La capa de servicios que maneja la lógica de negocio, interactúa con los repositorios y realiza
+  operaciones CRUD para los productos y movimientos de stock.
+    * **ProductService**: Servicio que gestiona la creación, actualización y obtención de productos.
+    * **StockMovementService**: Servicio que gestiona los movimientos de stock asociados a los productos.
+* **Repositories**: La capa de repositorios que se encarga de interactuar con la base de datos para acceder y modificar
+  los datos de los productos y movimientos de stock.
+    * **ProductRepository**: Repositorio que maneja las operaciones de base de datos para la entidad Product.
+    * **StockMovementRepository**: Repositorio que maneja las operaciones de base de datos para la entidad
+      StockMovement.
+* **db**: Carpeta que contiene el archivo db.sql, el cual contiene el código necesario para crear las tablas Products y
+  StockMovements en la base de datos PostgreSQL.
 
 ## Modelos
 
@@ -47,7 +58,8 @@ Representa un movimiento de stock asociado a un producto con las siguientes prop
 
 ## Configuración
 
-Este proyecto usa Docker Compose para levantar los servicios de la API y la base de datos. La conexión de la API a PostgreSQL está configurada automáticamente a través de Docker Compose.
+Este proyecto usa Docker Compose para levantar los servicios de la API y la base de datos. La conexión de la API a
+PostgreSQL está configurada automáticamente a través de Docker Compose.
 
 ## Instrucciones
 
@@ -73,7 +85,8 @@ Este proyecto usa Docker Compose para levantar los servicios de la API y la base
 
 5. **Estructura de la base de datos**:
     - **Products**: Tabla de productos con las columnas `Id`, `Name`, `Description`, y `Stock`.
-    - **StockMovements**: Tabla de movimientos de stock con las columnas `Id`, `ProductId`, `Quantity`, `Type`, y `Date`.
+    - **StockMovements**: Tabla de movimientos de stock con las columnas `Id`, `ProductId`, `Quantity`, `Type`, y
+      `Date`.
 
 6. **Eliminar los contenedores**:
     ```bash
@@ -95,11 +108,11 @@ CREATE TABLE "Products"
 
 CREATE TABLE "StockMovements"
 (
-    "Id"           SERIAL PRIMARY KEY,
-    "ProductId"    INT         NOT NULL,
-    "Quantity"     INT         NOT NULL,
-    "Type" VARCHAR(50) NOT NULL,
-    "Date"         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "Id"        SERIAL PRIMARY KEY,
+    "ProductId" INT         NOT NULL,
+    "Quantity"  INT         NOT NULL,
+    "Type"      VARCHAR(50) NOT NULL,
+    "Date"      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY ("ProductId") REFERENCES "Products" ("Id") ON DELETE CASCADE
 );
 ```

@@ -1,164 +1,121 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using prueba_tecnica.Models;
+using prueba_tecnica.Services;
 
 namespace prueba_tecnica.Controllers
 {
+    /// <summary>
+    /// Controlador para gestionar productos.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly ProductContext _context;
+        private readonly ProductService _productService;
 
-        public ProductController(ProductContext context)
+        public ProductController(ProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
 
-        // GET: api/Product
+        /// <summary>
+        /// Obtiene todos los productos.
+        /// </summary>
+        /// <returns>Lista de productos.</returns>
+        /// <response code="200">Retorna una lista de productos</response>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            return await _context.Products.ToListAsync();
+            var products = await _productService.GetAllProductsAsync();
+            return Ok(products);
         }
 
-        // GET: api/Product/5
+        /// <summary>
+        /// Obtiene un producto por su ID.
+        /// </summary>
+        /// <param name="id">ID del producto.</param>
+        /// <returns>Producto solicitado.</returns>
+        /// <response code="200">Producto encontrado.</response>
+        /// <response code="404">Producto no encontrado.</response>
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-
+            var product = await _productService.GetProductByIdAsync(id);
             if (product == null)
             {
-                return NotFound($"El producto con ID {id} no fue encontrado.");
+                return NotFound("Producto no encontrado.");
             }
 
-            return product;
+            return Ok(product);
         }
 
-        // PUT: api/Product/5
+        /// <summary>
+        /// Actualiza un producto existente.
+        /// </summary>
+        /// <param name="id">ID del producto a actualizar.</param>
+        /// <param name="product">Datos del producto.</param>
+        /// <returns>Resultado de la operación.</returns>
+        /// <response code="204">Producto actualizado exitosamente.</response>
+        /// <response code="400">Error en los datos enviados.</response>
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(int id, Product product)
         {
-            if (id != product.Id)
-            {
-                return BadRequest("El ID del producto no coincide con el ID proporcionado.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var existingProduct = await _context.Products.FindAsync(id);
-            if (existingProduct == null)
-            {
-                return NotFound($"El producto con ID {id} no fue encontrado.");
-            }
-
-            int stockDifference = product.Stock - existingProduct.Stock;
-
-            _context.Entry(existingProduct).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-
-               
-                if (stockDifference != 0)
-                {
-                    var stockMovement = new StockMovement
-                    {
-                        ProductId = product.Id,
-                        Quantity = Math.Abs(stockDifference),
-                        Date = DateTime.UtcNow,
-                        Type = stockDifference > 0 ? "Entrada" : "Salida"
-                    };
-
-                    _context.StockMovements.Add(stockMovement);
-                    await _context.SaveChangesAsync();
-                }
+                await _productService.UpdateProductAsync(id, product);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (ArgumentException ex)
             {
-                if (!ProductExists(id))
-                {
-                    return NotFound($"El producto con ID {id} no fue encontrado.");
-                }
-                else
-                {
-                    throw;
-                }
+                return BadRequest(ex.Message);
             }
 
             return NoContent();
         }
 
-        // POST: api/Product
+        /// <summary>
+        /// Crea un nuevo producto.
+        /// </summary>
+        /// <param name="product">Datos del producto a crear.</param>
+        /// <returns>Producto creado.</returns>
+        /// <response code="201">Producto creado exitosamente.</response>
+        /// <response code="400">Error en los datos enviados.</response>
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                var createdProduct = await _productService.CreateProductAsync(product);
+                return CreatedAtAction(nameof(GetProduct), new { id = createdProduct.Id }, createdProduct);
             }
-
-            if (product.Stock < 0)
+            catch (ArgumentException ex)
             {
-                return BadRequest("El stock no puede ser negativo.");
+                return BadRequest(ex.Message);
             }
-            
-            var stockMovement = new StockMovement
-            {
-                ProductId = product.Id,
-                Quantity = product.Stock,
-                Date = DateTime.UtcNow,
-                Type = "Entrada"
-            };
-
-            _context.StockMovements.Add(stockMovement);
-            await _context.SaveChangesAsync();
-
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
         }
 
-        // DELETE: api/Product/5
+        /// <summary>
+        /// Elimina un producto por su ID.
+        /// </summary>
+        /// <param name="id">ID del producto a eliminar.</param>
+        /// <returns>Resultado de la operación.</returns>
+        /// <response code="204">Producto eliminado exitosamente.</response>
+        /// <response code="400">Error al intentar eliminar el producto.</response>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
+            try
             {
-                return NotFound($"El producto con ID {id} no fue encontrado.");
+                await _productService.DeleteProductAsync(id);
             }
-            
-            var stockMovement = new StockMovement
+            catch (ArgumentException ex)
             {
-                ProductId = product.Id,
-                Quantity = product.Stock,
-                Date = DateTime.UtcNow,
-                Type = "Salida"
-            };
-
-            _context.StockMovements.Add(stockMovement);
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+                return BadRequest(ex.Message);
+            }
 
             return NoContent();
-        }
-
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
         }
     }
 }
