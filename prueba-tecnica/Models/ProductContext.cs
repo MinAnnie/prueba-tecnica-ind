@@ -7,5 +7,5 @@ public class ProductContext : DbContext
     public ProductContext(DbContextOptions<ProductContext> options) : base(options) {}
 
     public DbSet<Product> Products { get; set; }
-    public DbSet<StockMovement> StockMovements { get; set; } // Tabla para los movimientos de stock
+    public DbSet<StockMovement> StockMovements { get; set; }
 }

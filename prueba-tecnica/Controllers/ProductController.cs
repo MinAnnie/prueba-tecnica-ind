@@ -4,19 +4,21 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using prueba_tecnica.Models;
 using prueba_tecnica.Services;
+using prueba_tecnica.Utils.Errors;
 
 namespace prueba_tecnica.Controllers
 {
     /// <summary>
     /// Controlador para gestionar productos.
+    /// Este controlador permite realizar operaciones CRUD sobre los productos, como obtener todos los productos, obtener un producto por su ID, crear, actualizar y eliminar productos.
     /// </summary>
-    [Route("api/[controller]")]
     [ApiController]
-    public class ProductController : ControllerBase
+    [Route("api/[controller]")]
+    public class ProductsController : ControllerBase
     {
         private readonly ProductService _productService;
 
-        public ProductController(ProductService productService)
+        public ProductsController(ProductService productService)
         {
             _productService = productService;
         }
@@ -24,98 +26,137 @@ namespace prueba_tecnica.Controllers
         /// <summary>
         /// Obtiene todos los productos.
         /// </summary>
-        /// <returns>Lista de productos.</returns>
-        /// <response code="200">Retorna una lista de productos</response>
+        /// <returns>Lista de productos</returns>
+        /// <response code="200">Retorna la lista de productos</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<IActionResult> GetAll()
         {
-            var products = await _productService.GetAllProductsAsync();
-            return Ok(products);
+            try
+            {
+                var products = await _productService.GetAllProductsAsync();
+                return Ok(products);
+            }
+            catch (AppException ex)
+            {
+                return HandleAppException(ex);
+            }
+            catch (Exception ex)
+            {
+                // Manejo de excepciones generales
+                return StatusCode(500,
+                    new { Code = ErrorCodes.GeneralErrors.InternalServerError, Message = ex.Message });
+            }
         }
 
         /// <summary>
         /// Obtiene un producto por su ID.
         /// </summary>
-        /// <param name="id">ID del producto.</param>
-        /// <returns>Producto solicitado.</returns>
-        /// <response code="200">Producto encontrado.</response>
-        /// <response code="404">Producto no encontrado.</response>
+        /// <param name="id">ID del producto a obtener</param>
+        /// <returns>Producto con el ID especificado</returns>
+        /// <response code="200">Retorna el producto encontrado</response>
+        /// <response code="404">Si no se encuentra el producto</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
-        {
-            var product = await _productService.GetProductByIdAsync(id);
-            if (product == null)
-            {
-                return NotFound("Producto no encontrado.");
-            }
-
-            return Ok(product);
-        }
-
-        /// <summary>
-        /// Actualiza un producto existente.
-        /// </summary>
-        /// <param name="id">ID del producto a actualizar.</param>
-        /// <param name="product">Datos del producto.</param>
-        /// <returns>Resultado de la operación.</returns>
-        /// <response code="204">Producto actualizado exitosamente.</response>
-        /// <response code="400">Error en los datos enviados.</response>
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        public async Task<IActionResult> GetById(int id)
         {
             try
             {
-                await _productService.UpdateProductAsync(id, product);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+                var product = await _productService.GetProductByIdAsync(id);
+                if (product == null)
+                {
+                    return NotFound(new
+                        { Code = ErrorCodes.ProductErrors.ProductNotFound, Message = "Producto no encontrado" });
+                }
 
-            return NoContent();
+                return Ok(product);
+            }
+            catch (AppException ex)
+            {
+                return HandleAppException(ex);
+            }
         }
 
         /// <summary>
         /// Crea un nuevo producto.
         /// </summary>
-        /// <param name="product">Datos del producto a crear.</param>
-        /// <returns>Producto creado.</returns>
-        /// <response code="201">Producto creado exitosamente.</response>
-        /// <response code="400">Error en los datos enviados.</response>
+        /// <param name="product">Producto a crear</param>
+        /// <returns>El producto creado</returns>
+        /// <response code="201">Retorna el producto creado</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        public async Task<IActionResult> Create([FromBody] Product product)
         {
             try
             {
-                var createdProduct = await _productService.CreateProductAsync(product);
-                return CreatedAtAction(nameof(GetProduct), new { id = createdProduct.Id }, createdProduct);
+                await _productService.CreateProductAsync(product);
+                return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
             }
-            catch (ArgumentException ex)
+            catch (AppException ex)
             {
-                return BadRequest(ex.Message);
+                return HandleAppException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Actualiza un producto existente.
+        /// </summary>
+        /// <param name="id">ID del producto a actualizar</param>
+        /// <param name="product">Producto con los nuevos valores</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="204">Indica que la actualización fue exitosa</response>
+        /// <response code="400">Si el ID no coincide con el producto proporcionado</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Product product)
+        {
+            try
+            {
+                if (id != product.Id)
+                {
+                    return BadRequest(new
+                    {
+                        Code = ErrorCodes.GeneralErrors.InvalidRequest, Message = "El ID del producto no coincide."
+                    });
+                }
+
+                await _productService.UpdateProductAsync(product);
+                return NoContent();
+            }
+            catch (AppException ex)
+            {
+                return HandleAppException(ex);
             }
         }
 
         /// <summary>
         /// Elimina un producto por su ID.
         /// </summary>
-        /// <param name="id">ID del producto a eliminar.</param>
-        /// <returns>Resultado de la operación.</returns>
-        /// <response code="204">Producto eliminado exitosamente.</response>
-        /// <response code="400">Error al intentar eliminar el producto.</response>
+        /// <param name="id">ID del producto a eliminar</param>
+        /// <returns>Resultado de la operación</returns>
+        /// <response code="204">Indica que el producto fue eliminado exitosamente</response>
+        /// <response code="500">Si ocurre un error interno en el servidor</response>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 await _productService.DeleteProductAsync(id);
+                return NoContent();
             }
-            catch (ArgumentException ex)
+            catch (AppException ex)
             {
-                return BadRequest(ex.Message);
+                return HandleAppException(ex);
             }
+        }
 
-            return NoContent();
+        private IActionResult HandleAppException(AppException ex)
+        {
+            return StatusCode(500, new
+            {
+                Code = ex.Code,
+                Message = ex.Message
+            });
         }
     }
 }

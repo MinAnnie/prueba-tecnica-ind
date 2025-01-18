@@ -5,19 +5,16 @@ using prueba_tecnica.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Agregar servicios al contenedor.
 builder.Services.AddControllers();
 
-// Registra los repositorios
-builder.Services.AddScoped<ProductRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<StockMovementRepository>();
 builder.Services.AddScoped<ProductService>();
 
-// Configurar el contexto de la base de datos para usar PostgreSQL
 builder.Services.AddDbContext<ProductContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Agregar servicios de Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -45,7 +42,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "API de Productos v1");
-        c.RoutePrefix = string.Empty; 
+        c.RoutePrefix = string.Empty;
     });
 }
 
